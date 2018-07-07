@@ -1,2 +1,5 @@
-# pcb_tracking_IP
-Code implementing a design project for Image Processing course.
+# PCB tracking project
+We need to implement the following:
+ - Identify a pcb in a potentially noisy frame
+ - Draw over the pcb in output image stream
+ - Make a guess at dimensions
