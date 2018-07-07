@@ -83,9 +83,3 @@ if __name__ == "__main__":
     # Get biggest contour and mask
     find_overlay_region(image, True)
 
-    # Mask original image to output
-    masked_data = cv2.bitwise_and(image, image, mask=mask)
-    cv2.imshow("Masked", masked_data)
-    cv2.waitKey(0)
-    print(biggest_contour)
-
