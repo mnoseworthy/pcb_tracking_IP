@@ -232,13 +232,13 @@ class pcb_region_detection():
                 self.addText(self.buffer["blurred"], "blurred")
                 self.addText(self.buffer["edged"], "edged")
                 img_list = [
-                    self.buffer["Input"],
-                    self.buffer["Output"],
+                    self.buffer["Input"],                  
                     self.buffer["equalized"],
-                    self.buffer["morphed"],
-                    self.buffer["thresholded"],
                     self.buffer["blurred"],
-                    self.buffer["edged"]
+                    self.buffer["thresholded"],
+                    self.buffer["morphed"],       
+                    self.buffer["edged"],
+                    self.buffer["Output"]
                 ]
                 
                 ShowManyImages("images", img_list)
