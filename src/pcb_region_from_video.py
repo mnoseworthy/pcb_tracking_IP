@@ -54,6 +54,7 @@ class pcb_region_detection():
             self.hsv_green_thresholding,
             self.morphology_operation,
             self.canny_edge_detection,
+            self.hsv_to_gray,
             self.contour_filter
         ]
 
@@ -83,6 +84,13 @@ class pcb_region_detection():
             Converts a bgr array to hsv format
         """
         return cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    
+    def hsv_to_gray(self, img):
+        """
+            Converts HSV image to Grayscale
+        """
+        bgr = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
+        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     def blur_before_thresh(self, img):
         """
