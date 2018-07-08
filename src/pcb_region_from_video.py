@@ -54,7 +54,7 @@ class pcb_region_detection():
             self.hsv_green_thresholding,
             self.morphology_operation,
             self.canny_edge_detection,
-            self.hsv_to_gray,
+            #self.hsv_to_gray,
             self.contour_filter
         ]
 
@@ -108,8 +108,8 @@ class pcb_region_detection():
         lower = np.array([45,100,100])
         upper = np.array([82, 180,180])
         green_mask = cv2.inRange(img, lower, upper)
-        self.buffer["morphed"] = cv2.bitwise_and(img, img, mask=green_mask )
-        return self.buffer["morphed"]
+        self.buffer["thresholded"] = cv2.bitwise_and(img, img, mask=green_mask )
+        return self.buffer["thresholded"]
 
     def morphology_operation(self, img):
         """
@@ -132,8 +132,8 @@ class pcb_region_detection():
             array of contours that we must filter to output our best guess at which
             contour contains the PCB.
         """
-        height, width, channels = img.shape
-        area = height*width
+        #height, width, channels = img.shape
+        #area = height*width
         _, cnts, im = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = sorted(cnts, key=cv2.contourArea)
         index = len(cnts) - 1
@@ -176,7 +176,7 @@ class pcb_region_detection():
                 the x,y co-ordinates of the centre point of the contour
         """
         # Check if we need to pull a new frame
-        if isinstance(self.frame, list) and self.frame == None:
+        if not isinstance(self.frame, list):
             self.getFrame()
 
         # Clear buffers
@@ -195,22 +195,28 @@ class pcb_region_detection():
             for funct in self.function_pipe:
                 # First function requires input frame
                 if result == "Unset":
-                    funct(self.frame)
+                    result = funct(self.frame)
                 else:
-                    funct(result)
+                    result = funct(result)
+
+                if not isinstance(result, np.ndarray):
+                    print("Type returned was {}".format(type(result)))
+                    self.failure = True
+                    print("Failure occured during function {}".format(funct) )
+                    break
         except Exception, err:
             traceback.print_exc()
             self.failure = True
             pass
         
-        if result and not self.failure:
+        if not self.failure:
             # Calculate center of contour
             moment = cv2.moments(result)
             if(moment["m00"] != 0):
                 x = int( moment["m10"] / moment['m00'] )
                 y = int( moment['m01'] / moment['m00'] )
 
-            cv2.drawContours(self.frame, [result], -1, (0, 0, 255), 1)
+            self.buffer["Output"] = cv2.drawContours(self.frame, [result], -1, (0, 0, 255), 1)
 
             # If true, output all intermediate images as well as Input/Output
             if self.display == True: 
@@ -227,7 +233,7 @@ class pcb_region_detection():
                 cv2.imshow("Output", self.buffer["Output"])
    
             # Return the contour & centre coordinates
-            ret = [cnt, [x,y] ]
+            ret = [result, [x,y] ]
         else:
             ret = [False, [False, False]]
         
@@ -254,6 +260,7 @@ class pcb_region_detection():
             try:
                 self.getFrame()
                 self.find_overlay_region()
+                cv2.waitKey(0)
             except Exception, err:
                 traceback.print_exc()
                 self.videoCapStop()
