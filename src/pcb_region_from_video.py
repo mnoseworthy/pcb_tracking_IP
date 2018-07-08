@@ -90,7 +90,7 @@ class pcb_region_detection():
             Converts HSV image to Grayscale
         """
         bgr = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
-        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        return cv2.cvtColor(img, cv2.IMREAD_GRAYSCALE)
 
     def blur_before_thresh(self, img):
         """
