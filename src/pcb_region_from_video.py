@@ -61,14 +61,14 @@ class pcb_region_detection():
         ###################################################################
         self.videoCapStart()
     
-    def clearBuffers():
+    def clearBuffers(self):
         """
             Emptys buffer data
         """
         for key, value in self.buffer:
             self.buffer[key] = None
 
-    def hist_equalize(img):
+    def hist_equalize(self, img):
         """
             Equalizes a color image, returning the result in color
         """
@@ -77,13 +77,13 @@ class pcb_region_detection():
         self.buffer["equalized"] = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
         return self.buffer["equalized"]
     
-    def bgr_to_hsv(img):
+    def bgr_to_hsv(self, img):
         """
             Converts a bgr array to hsv format
         """
         return cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    def blur_before_thresh(img):
+    def blur_before_thresh(self, img):
         """
             Blurs an image, to be used before inputing the return through
             a thresholding algorithm
@@ -91,7 +91,7 @@ class pcb_region_detection():
         self.buffer["blurred"] = cv2.medianBlur(img, 5)
         return self.buffer["blurred"]
 
-    def hsv_green_thresholding(img):
+    def hsv_green_thresholding(self, img):
         """
             Uses a HSV format image, and thresholds based on hue to remove all colors
             but the range of greens we expect a PCB to be
@@ -102,7 +102,7 @@ class pcb_region_detection():
         self.buffer["morphed"] = cv2.bitwise_and(img, img, mask=green_mask )
         return self.buffer["morphed"]
 
-    def morphology_operation(img):
+    def morphology_operation(self, img):
         """
             Uses morphology to attempt to reduce salt and pepper noise
         """
@@ -110,14 +110,14 @@ class pcb_region_detection():
         self.buffer["morphed"] = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
         return self.buffer["morphed"]
     
-    def canny_edge_detection(img):
+    def canny_edge_detection(self, img):
         """
             Performes canny edge detection on the image and returns the result
         """
         self.buffer["edged"] = cv2.Canny(img,100,110)
         return self.buffer["edged"]
 
-    def contour_filter(img):
+    def contour_filter(self, img):
         """
             After all image processing operations have completed, we're left with an 
             array of contours that we must filter to output our best guess at which
@@ -158,7 +158,7 @@ class pcb_region_detection():
             return False
 
 
-    def find_overlay_region():
+    def find_overlay_region(self):
         """
             Locates the PCB in the given image frame.
             @param img (cv2.image) - Pointer to an openCV2 image object, returned from imread().
@@ -229,18 +229,18 @@ class pcb_region_detection():
 
 
 
-    def videoCapStart():
+    def videoCapStart(self):
         self.cap = cv2.VideoCapture(0)
         return self.cap
 
-    def videoCapStop():
+    def videoCapStop(self):
         self.cap.release()
     
-    def getFrame():
+    def getFrame(self):
         self.frame = self.cap.read()
         return self.frame
 
-    def mainThread():
+    def mainThread(self):
         self.display = True
         while(1):
             try:
