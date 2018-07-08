@@ -229,8 +229,6 @@ class pcb_region_detection():
         # Return values
         return ret
 
-
-
     def videoCapStart(self):
         self.cap = cv2.VideoCapture(0)
         return self.cap
@@ -239,7 +237,7 @@ class pcb_region_detection():
         self.cap.release()
     
     def getFrame(self):
-        self.frame = self.cap.read()
+        ret, self.frame = self.cap.read()
         return self.frame
 
     def mainThread(self):
