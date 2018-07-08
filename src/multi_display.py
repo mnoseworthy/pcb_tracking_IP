@@ -139,10 +139,8 @@ def ShowManyImages(title, images):
             
             # Resize image
             tmp = cv2.resize(image, None, fx=1/scale, fy=1/scale, interpolation=cv2.INTER_CUBIC)
-            if not gs:
-                _width, _height, channels = tmp.shape
-            else:
-                _width, _height = tmp.shape
+            _width, _height, channels = tmp.shape
+
 
             m_w = m+_width
             n_h = n+_height
