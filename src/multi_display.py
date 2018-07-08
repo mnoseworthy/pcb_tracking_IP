@@ -171,6 +171,8 @@ def ShowManyImages(title, images):
     
 
     # Create new window and display image
+    cv2.namedWindow(title, cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty(title, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     cv2.imshow(title, canvas_image)
 
 

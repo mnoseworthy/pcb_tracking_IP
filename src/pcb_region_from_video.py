@@ -56,7 +56,7 @@ class pcb_region_detection():
             self.hsv_green_thresholding,
             self.morphology_operation,
             self.canny_edge_detection,
-            #self.hsv_to_gray,
+            self.morphology_operation,
             self.contour_filter
         ]
 
@@ -107,10 +107,10 @@ class pcb_region_detection():
             Uses a HSV format image, and thresholds based on hue to remove all colors
             but the range of greens we expect a PCB to be
         """
-        #lower = np.array([45,100,100])
-        #upper = np.array([82, 180,180])
-        lower = np.array([0,100,100])
-        upper = np.array([180, 180,180])
+        lower = np.array([45,0,0])
+        upper = np.array([82, 180,180])
+        #lower = np.array([0,100,100])
+        #upper = np.array([180, 180,180])
         green_mask = cv2.inRange(img, lower, upper)
         self.buffer["thresholded"] = cv2.bitwise_and(img, img, mask=green_mask )
         return self.buffer["thresholded"]
@@ -119,7 +119,7 @@ class pcb_region_detection():
         """
             Uses morphology to attempt to reduce salt and pepper noise
         """
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11,11))
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15,15))
         self.buffer["morphed"] = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
         return self.buffer["morphed"]
     
