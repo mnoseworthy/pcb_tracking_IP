@@ -43,8 +43,7 @@ def find_overlay_region(img, display = False):
     blur = cv2.GaussianBlur(edged_frame, (5,5), 0)
     ret, threshed = cv2.threshold(blur, 50, 200, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
-    #threshed = cv2.threshold(gray, 200, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 255, 125)
-    
+
 
     ## (2) Morph-op to remove noise
     #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11,11))
@@ -52,7 +51,7 @@ def find_overlay_region(img, display = False):
     morphed = threshed
     
     ## (3) Find the max-area contour, which should be the PCB
-    cnts, im = cv2.findContours(morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, cnts, im = cv2.findContours(morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = sorted(cnts, key=cv2.contourArea)
     index = len(cnts) - 1
     cnt = False
@@ -125,13 +124,13 @@ def mainThread(cap):
 
 if __name__ == "__main__":
     # Load image
-    path = "assets/test0.jpg"
-    image = cv2.imread(path)
+    #path = "assets/test0.jpg"
+    #image = cv2.imread(path)
     
 
     # Print image size
-    height, width = image.shape[:2]
-    print("Input image is {} by {} ".format(height, width))
+    #height, width = image.shape[:2]
+    #print("Input image is {} by {} ".format(height, width))
 
     # Get biggest contour and mask
     cap = videoCapStart()
