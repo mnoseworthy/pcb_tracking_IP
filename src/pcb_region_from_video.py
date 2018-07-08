@@ -66,7 +66,7 @@ class pcb_region_detection():
         """
             Emptys buffer data
         """
-        for key, value in self.buffer:
+        for key, value in self.buffer.iteritems():
             self.buffer[key] = None
 
     def hist_equalize(self, img):
