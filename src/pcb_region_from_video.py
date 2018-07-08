@@ -185,7 +185,7 @@ class pcb_region_detection():
             result = None
             for funct in self.function_pipe:
                 # First function requires input frame
-                if result = None:
+                if result == None:
                     funct(self.frame)
                 else:
                     funct(result)
