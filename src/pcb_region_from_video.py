@@ -126,7 +126,7 @@ class pcb_region_detection():
         """
         height, width, channels = img.shape
         area = height*width
-        _, cnts, im = cv2.findContours(edged_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        _, cnts, im = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = sorted(cnts, key=cv2.contourArea)
         index = len(cnts) - 1
         cnt = False
