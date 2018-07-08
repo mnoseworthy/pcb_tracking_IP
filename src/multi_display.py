@@ -150,12 +150,6 @@ def ShowManyImages(title, images):
             # Draw on canvas
             canvas_image[ m:m_w  ,  n:n_h , :] = tmp
 
-            
-        except Exception, err:
-            #cv2.imshow("Failed to scale this image", image)
-            traceback.print_exc()
-            pass
-
         # Update iterators
         imgIndex = imgIndex + 1
         n = n + (20 + dims["scale"])
