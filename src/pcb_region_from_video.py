@@ -178,7 +178,7 @@ class pcb_region_detection():
         ret = [False, [False, False]]
 
         # Make a copy of image if we're going to display
-        if display != None:
+        if self.display != None:
             self.buffers["Input"] = self.frame
 
         # Push frame through the function pipe, result should be a single contour
@@ -205,16 +205,16 @@ class pcb_region_detection():
             cv2.drawContours(self.frame, [result], -1, (0, 0, 255), 1)
 
             # If true, output all intermediate images as well as Input/Output
-            if display == True: 
+            if self.display == True: 
                 cv2.imshow("Input", self.buffer["Input"])
                 cv2.imshow("Output", self.buffer["Output"])
-                cv2.imshow("equalized". self.buffer["equalized"])
-                cv2.imshow("morphed". self.buffer["morphed"])
-                cv2.imshow("thresholded". self.buffer["thresholded"])
-                cv2.imshow("blurred". self.buffer["blurred"])
-                cv2.imshow("edged". self.buffer["edged"])
+                cv2.imshow("equalized", self.buffer["equalized"])
+                cv2.imshow("morphed", self.buffer["morphed"])
+                cv2.imshow("thresholded", self.buffer["thresholded"])
+                cv2.imshow("blurred", self.buffer["blurred"])
+                cv2.imshow("edged", self.buffer["edged"])
             # If false output just Input/Output frames
-            elif display == False:
+            elif self.display == False:
                 cv2.imshow("Input", self.buffer["Input"])
                 cv2.imshow("Output", self.buffer["Output"])
    
