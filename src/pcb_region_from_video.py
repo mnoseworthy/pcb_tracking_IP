@@ -47,13 +47,13 @@ class pcb_region_detection():
 
         # List of function pointers which the input frame is to be passed through
         self.function_pipe = [
-            hist_equalize,
-            bgr_to_hsv,
-            blur_before_thresh,
-            hsv_green_thresholding,
-            morphology_operation,
-            canny_edge_detection,
-            contour_filter
+            self.hist_equalize,
+            self.bgr_to_hsv,
+            self.blur_before_thresh,
+            self.hsv_green_thresholding,
+            self.morphology_operation,
+            self.canny_edge_detection,
+            self.contour_filter
         ]
 
         ###################################################################
