@@ -288,7 +288,9 @@ class pcb_region_detection():
             try:
                 self.getFrame()
                 self.find_overlay_region()
-                cv2.waitKey(0)
+                k= cv2.waitKey(5)
+                if k==27:
+                    break
             except Exception, err:
                 traceback.print_exc()
                 self.videoCapStop()
