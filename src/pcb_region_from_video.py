@@ -191,10 +191,10 @@ class pcb_region_detection():
 
         # Push frame through the function pipe, result should be a single contour
         try:
-            result = None
+            result = "Unset"
             for funct in self.function_pipe:
                 # First function requires input frame
-                if result == None:
+                if result == "Unset":
                     funct(self.frame)
                 else:
                     funct(result)
