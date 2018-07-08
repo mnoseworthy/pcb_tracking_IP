@@ -107,8 +107,10 @@ class pcb_region_detection():
             Uses a HSV format image, and thresholds based on hue to remove all colors
             but the range of greens we expect a PCB to be
         """
-        lower = np.array([45,100,100])
-        upper = np.array([82, 180,180])
+        #lower = np.array([45,100,100])
+        #upper = np.array([82, 180,180])
+        lower = np.array([0,100,100])
+        upper = np.array([180, 180,180])
         green_mask = cv2.inRange(img, lower, upper)
         self.buffer["thresholded"] = cv2.bitwise_and(img, img, mask=green_mask )
         return self.buffer["thresholded"]
@@ -223,6 +225,7 @@ class pcb_region_detection():
 
             # If true, output all intermediate images as well as Input/Output
             if self.display == True: 
+                
                 # Add text to images
                 self.addText(self.buffer["Input"], "Input")
                 self.addText(self.buffer["Output"], "Output")
