@@ -14,7 +14,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import traceback
 
-import ShowManyImages
+from multi_display import ShowManyImages
 
 class pcb_region_detection():
     def __init__(self):
@@ -166,6 +166,7 @@ class pcb_region_detection():
         if(len(cnts)):
             return cnts[-1]
         else:
+            self.failure = True
             return False
 
 
@@ -189,7 +190,7 @@ class pcb_region_detection():
 
         # Make a copy of image if we're going to display
         if self.display != None:
-            self.buffer["Input"] = self.frame
+            self.buffer["Input"] = self.frame.copy()
 
         # Push frame through the function pipe, result should be a single contour
         try:
@@ -222,6 +223,14 @@ class pcb_region_detection():
 
             # If true, output all intermediate images as well as Input/Output
             if self.display == True: 
+                # Add text to images
+                self.addText(self.buffer["Input"], "Input")
+                self.addText(self.buffer["Output"], "Output")
+                self.addText(self.buffer["equalized"], "equalized")
+                self.addText(self.buffer["morphed"], "morphed")
+                self.addText(self.buffer["thresholded"], "thresholded")
+                self.addText(self.buffer["blurred"], "blurred")
+                self.addText(self.buffer["edged"], "edged")
                 img_list = [
                     self.buffer["Input"],
                     self.buffer["Output"],
@@ -231,13 +240,7 @@ class pcb_region_detection():
                     self.buffer["blurred"],
                     self.buffer["edged"]
                 ]
-                #cv2.imshow("Input", self.buffer["Input"])
-                #cv2.imshow("Output", self.buffer["Output"])
-                #cv2.imshow("equalized", self.buffer["equalized"])
-                #cv2.imshow("morphed", self.buffer["morphed"])
-                #cv2.imshow("thresholded", self.buffer["thresholded"])
-                #cv2.imshow("blurred", self.buffer["blurred"])
-                #cv2.imshow("edged", self.buffer["edged"])
+                
                 ShowManyImages("images", img_list)
             # If false output just Input/Output frames
             elif self.display == False:
@@ -246,14 +249,24 @@ class pcb_region_detection():
    
             # Return the contour & centre coordinates
             ret = [result, [x,y] ]
-        else:
-            ret = [False, [False, False]]
+
         
         # Clear processed frame
         self.frame = None
 
         # Return values
         return ret
+
+    def addText(self, img, text):
+        """
+            Adds text to upper-left corner of image
+        """
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        top_left = (50,50)
+        fontScale = 2
+        fontColor = (255,255,255)
+        lineType = 2
+        cv2.putText(img, text, top_left, font, fontScale, fontColor, lineType)
 
     def videoCapStart(self):
         self.cap = cv2.VideoCapture(0)
