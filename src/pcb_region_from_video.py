@@ -14,6 +14,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 import traceback
 
+import ShowManyImages
+
 class pcb_region_detection():
     def __init__(self):
         ###################################################################
@@ -220,13 +222,23 @@ class pcb_region_detection():
 
             # If true, output all intermediate images as well as Input/Output
             if self.display == True: 
-                cv2.imshow("Input", self.buffer["Input"])
-                cv2.imshow("Output", self.buffer["Output"])
-                cv2.imshow("equalized", self.buffer["equalized"])
-                cv2.imshow("morphed", self.buffer["morphed"])
-                cv2.imshow("thresholded", self.buffer["thresholded"])
-                cv2.imshow("blurred", self.buffer["blurred"])
-                cv2.imshow("edged", self.buffer["edged"])
+                img_list = [
+                    self.buffer["Input"],
+                    self.buffer["Output"],
+                    self.buffer["equalized"],
+                    self.buffer["morphed"],
+                    self.buffer["thresholded"],
+                    self.buffer["blurred"],
+                    self.buffer["edged"]
+                ]
+                #cv2.imshow("Input", self.buffer["Input"])
+                #cv2.imshow("Output", self.buffer["Output"])
+                #cv2.imshow("equalized", self.buffer["equalized"])
+                #cv2.imshow("morphed", self.buffer["morphed"])
+                #cv2.imshow("thresholded", self.buffer["thresholded"])
+                #cv2.imshow("blurred", self.buffer["blurred"])
+                #cv2.imshow("edged", self.buffer["edged"])
+                ShowManyImages("images", img_list)
             # If false output just Input/Output frames
             elif self.display == False:
                 cv2.imshow("Input", self.buffer["Input"])
