@@ -19,7 +19,7 @@ if __name__ == "__main__":
     tracker_types = ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'GOTURN']
     tracker_type = tracker_types[2]
 
-    tracker = cv2.TrackerMIL_create()
+    tracker = cv2.TrackerTLD_create()
 
 
     # Read video
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         ok, bbox = tracker.update(frame)
 
         # Calculate Frames per second (FPS)
-        fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer);
+        fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
         # Draw bounding box
         if ok:
