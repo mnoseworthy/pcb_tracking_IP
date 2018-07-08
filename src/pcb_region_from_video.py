@@ -168,7 +168,7 @@ class pcb_region_detection():
                 the x,y co-ordinates of the centre point of the contour
         """
         # Check if we need to pull a new frame
-        if self.frame == None:
+        if isinstance(self.frame, list) and self.frame == None:
             self.getFrame()
 
         # Clear buffers
