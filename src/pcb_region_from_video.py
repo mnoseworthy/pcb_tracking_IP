@@ -12,6 +12,7 @@ Operations:
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+import traceback
 
 class pcb_region_detection():
     def __init__(self):
@@ -189,7 +190,8 @@ class pcb_region_detection():
                     funct(self.frame)
                 else:
                     funct(result)
-        except:
+        except Exception, err:
+            traceback.print_exc()
             self.failure = True
             pass
         
@@ -246,7 +248,8 @@ class pcb_region_detection():
             try:
                 self.getFrame()
                 self.get_overlay_region()
-            except:
+            except Exception, err:
+                traceback.print_exc()
                 self.videoCapStop()
                 break
         return False
