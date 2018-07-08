@@ -179,7 +179,7 @@ class pcb_region_detection():
 
         # Make a copy of image if we're going to display
         if self.display != None:
-            self.buffers["Input"] = self.frame
+            self.buffer["Input"] = self.frame
 
         # Push frame through the function pipe, result should be a single contour
         try:
