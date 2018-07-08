@@ -165,6 +165,9 @@ def ShowManyImages(title, images):
         # Update iterators
         imgIndex = imgIndex + 1
         n = n + (20 + dims["scale"])
+
+        if gs:
+            gs = False
     
 
     # Create new window and display image
