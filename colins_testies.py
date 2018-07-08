@@ -1,42 +1,69 @@
-"""import numpy as np
-import cv2
+"""
+Test file for pseduo-coding before starting the project
 
-cap = cv2.VideoCapture(0)
 
-while(cap.isOpened()):
-    ret, frame = cap.read()
-
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    cv2.imshow('frame',gray)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()"""
+Operations:
+ -Convert color image to HSV color space
+ -Filter noise with median Blur
+ -Create mask based on HSV of filtered image for green
+ -Morph mask 
+ -Apply mask to original video image 
+ -Canny Edge detects edges of resulting image
+"""
 
 import cv2 as cv
 import numpy as np
+
 cap = cv.VideoCapture(0)
 while(1):
     # Take each frame
     _, frame = cap.read()
-    # Convert BGR to HSV
+
+    # Convert to HSV colorspace
     hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+
+    # Median Blur to reduce noise (salt & peppa)
+    median = cv.medianBlur(hsv,3)
+
     # define range of color in HSV
-    lower_color = np.array([50,100,50])
-    upper_color = np.array([255,150,255])
-    # Threshold the HSV image to get only blue colors
-    mask = cv.inRange(hsv, lower_color, upper_color)
+    lower_color = np.array([40,100,100])
+    upper_color = np.array([80,255,255])
+
+    # Threshold the HSV image
+    mask = cv.inRange(median, lower_color, upper_color)
+
+    # Morphological Operations - get struct element, choose morph
+    kernel = cv.getStructuringElement(cv.MORPH_RECT,(11,11))
+    #opening = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
+    #dilation = cv.dilate(mask,kernel,iterations = 1)
+    closing = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
+    #gradient = cv.morphologyEx(mask, cv.MORPH_GRADIENT, kernel)
+    
     # Bitwise-AND mask and original image
-    res = cv.bitwise_and(frame,frame, mask= mask)
-    cv.imshow('frame',frame)
+    res = cv.bitwise_and(frame,frame, mask= closing)
+
+    # Canny Edge-Detection
+    edges = cv.Canny(closing,100,150)
+
+    cv.imshow('HSV Blur',median)
+    cv.imshow('original',frame)
     cv.imshow('mask',mask)
-    cv.imshow('res',res)
+    cv.imshow('morph',closing)
+    cv.imshow('result',res)
+    cv.imshow('edges',edges)
+
     k = cv.waitKey(5) & 0xFF
     if k == 27:
         break
 cv.destroyAllWindows()
+
+
+"""
+Playing with Hough Lines
+
+Operations:
+ -
+"""
 
 """import numpy as np
 import cv2
