@@ -89,64 +89,78 @@ def ShowManyImages(title, images):
 
     # Create canvas image
     dims = scaleMap[numImages]
-    canvas_image = np.zeros((dims['h']*dims['scale']+20*dims['w'], dims['w']*dims['scale']+20*dims['h'], 3), np.uint8)
+    canvas_image = np.zeros((dims['h']*dims['scale']+25*dims['w'], dims['w']*dims['scale']+25*dims['h'], 3), np.uint8)
 
     # Iterate over input images
     imgIndex = 1
     m = 20
     n = 20
-
+    print("Iterating over {} images".format(numImages) )
     for img in images:
-
-        # make copy of input
-        image = img.copy()    
-
-        # get heightxwidth of image
-        if  len(image.shape) == 3 :
-            x, y, channels = image.shape
-            if x <= 0 or y <= 0:
-                imgIndex = imgIndex + 1
-                continue
-        else:
-            gs = True
-            print("Input was grayscale")
-            x, y = image.shape
-            if x <= 0 or y <= 0:
-                imgIndex = imgIndex + 1
-                continue
-        
+        print("Image index {}".format(imgIndex))
+        image = img.copy()
+        try:    
+            # get heightxwidth of image
+            if  len(image.shape) == 3 :
+                x, y, channels = image.shape
+                if x <= 0 or y <= 0:
+                    imgIndex = imgIndex + 1
+                    continue
+            else:
+                gs = True
+                print("Input was grayscale")
+                x, y = image.shape
+                if x <= 0 or y <= 0:
+                    imgIndex = imgIndex + 1
+                    continue
+            
             if gs:
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
+
+            #print("Input has {} channels".format(channels))
             # Find which dimension is larger
             if  x > y :
                 maxDim = x
             else:
                 maxDim = y
-
             # Calculate scale
             scale = float(  float(maxDim) / dims['scale'] )
-
+            #print("scale is {}".format(scale))
             # Find alignment values
             if imgIndex % dims['w'] == 0 and n != 20:
                 print("Moving to next column: imgIndex {}, dims[w] {}".format(imgIndex, dims['w']) )
                 n = 20
                 m = m + 20 + dims['scale']
-
             # Calculate region to draw this image on
+            #ROI = cv2.rectangle(canvas_image, (m,int( x/scale )), (n, int( y/scale )), 255 )
             height = int(y/scale)
             width = int(x/scale)
+            #print("Height {}, width {}".format(height, width))
+            print("m {}, n {}".format(m,n))
+            #print("x {}, y {}".format(x/scale,y/scale))
             
             # Resize image
+            #tmp = cv2.resize(image, dsize=(height, width), interpolation=cv2.INTER_CUBIC)
             tmp = cv2.resize(image, None, fx=1/scale, fy=1/scale, interpolation=cv2.INTER_CUBIC)
-            _width, _height, channels = tmp.shape
-
-
+            if not gs:
+                _width, _height, channels = tmp.shape
+            #else:
+            #    _width, _height = tmp.shape
+            #print("Scaled height {}, width{}".format(_height, _width))
+            #print("Output range: {} -> {}, {} -> {}".format(m, (m+_width), n, (n+_height)) )
             m_w = m+_width
             n_h = n+_height
-
+            #print("m_w {}, n_h {}".format(m_w, n_h))
             # Draw on canvas
             canvas_image[ m:m_w  ,  n:n_h , :] = tmp
+            #else:
+            #    canvas_image[ 460:610, 240:440] = tmp[0:150, 0:200]
+            
+        except Exception, err:
+            #cv2.imshow("Failed to scale this image", image)
+            traceback.print_exc()
+            pass
 
         # Update iterators
         imgIndex = imgIndex + 1
