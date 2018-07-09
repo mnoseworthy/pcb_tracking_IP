@@ -36,6 +36,7 @@ class pcb_region_detection():
             "morphed" : None,
             "edged" : None,
             "contours" : None,
+            "hough" : None,
             "Output" : None
         }
 
@@ -57,6 +58,7 @@ class pcb_region_detection():
             self.morphology_operation,
             self.canny_edge_detection,
             self.morphology_operation,
+            self.hough_line_trans,
             self.contour_filter
         ]
 
@@ -99,7 +101,7 @@ class pcb_region_detection():
             Blurs an image, to be used before inputing the return through
             a thresholding algorithm
         """
-        self.buffer["blurred"] = cv2.medianBlur(img, 5)
+        self.buffer["blurred"] = cv2.medianBlur(img, 1)
         return self.buffer["blurred"]
 
     def hsv_green_thresholding(self, img):
@@ -107,8 +109,8 @@ class pcb_region_detection():
             Uses a HSV format image, and thresholds based on hue to remove all colors
             but the range of greens we expect a PCB to be
         """
-        lower = np.array([45,0,0])
-        upper = np.array([82, 180,180])
+        lower = np.array([45,25,0])
+        upper = np.array([82, 140,180])
         #lower = np.array([0,100,100])
         #upper = np.array([180, 180,180])
         green_mask = cv2.inRange(img, lower, upper)
@@ -122,11 +124,38 @@ class pcb_region_detection():
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15,15))
         self.buffer["morphed"] = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
         return self.buffer["morphed"]
+
+    def hough_line_trans(self, img):
+        """
+            Applys hough line transform
+        """
+        im = img.copy()
+        lines = cv2.HoughLines(im,1,np.pi/180,200)
+        print(type(lines))
+        if isinstance(lines, np.ndarray):
+            for line in lines:
+                for rho,theta in line:
+                    a = np.cos(theta)
+                    b = np.sin(theta)
+                    x0 = a*rho
+                    y0 = b*rho
+                    x1 = int(x0 + 1000*(-b))
+                    y1 = int(y0 + 1000*(a))
+                    x2 = int(x0 - 1000*(-b))
+                    y2 = int(y0 - 1000*(a))
+
+                    cv2.line(im,(x1,y1),(x2,y2),(255,255,255),5)
+        self.buffer["hough"] = im
+        return img
     
     def canny_edge_detection(self, img):
         """
             Performes canny edge detection on the image and returns the result
         """
+        sigma = 0.33
+        v = np.median(img)
+        upper = int(max(0, (1.0 - sigma) * v))
+        upper = int(max(0, (1.0 + sigma) * v))
         self.buffer["edged"] = cv2.Canny(img,100,110)
         return self.buffer["edged"]
 
@@ -234,13 +263,15 @@ class pcb_region_detection():
                 self.addText(self.buffer["thresholded"], "thresholded")
                 self.addText(self.buffer["blurred"], "blurred")
                 self.addText(self.buffer["edged"], "edged")
+                self.addText(self.buffer["hough"], "hough transform")
                 img_list = [
                     self.buffer["Input"],                  
                     self.buffer["equalized"],
-                    self.buffer["blurred"],
+                    #self.buffer["blurred"],
                     self.buffer["thresholded"],
                     self.buffer["morphed"],       
                     self.buffer["edged"],
+                    self.buffer["hough"],
                     self.buffer["Output"]
                 ]
                 
