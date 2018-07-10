@@ -83,10 +83,11 @@ class PCB_Dataset(Dataset):
                     self.pp = False
 
             with BufferPoolResource(self.num_images, "batched", callback) as BufferPool:
+                self.BufferPool = BufferPool
                 threads = []
                 # Iterate over each image path and spawn a thread for each
                 for image in self.images:
-                    t = Process( target=self.threadWorker , args=( BufferPool, image )  )
+                    t = Process( target=self.threadWorker , args=( image )  )
                     t.start()
                 # Wait for buffer batch to complete
                 while not callback(None, True):
@@ -95,17 +96,18 @@ class PCB_Dataset(Dataset):
                 for t in threads:
                     t.join()
         
-        def threadWorker(self, BufferPool, imagePath):
+        def threadWorker(self, imagePath):
             """
                 Defines the task each thread will run during pre-processing the data-set
             """
-            # Claim a buffer in the pool
-            buf = BufferPool.make()
-            # Load image
-            img = cv2.imread(imagePath)
-            # Preform pre-processing 
-            # Writeout and close thread
-            BufferPool.writeout(img, buf)
+            if self.BufferPool:
+                # Claim a buffer in the pool
+                buf = self.BufferPool.make()
+                # Load image
+                img = cv2.imread(imagePath)
+                # Preform pre-processing 
+                # Writeout and close thread
+                self.BufferPool.writeout(img, buf)
 
 
 
