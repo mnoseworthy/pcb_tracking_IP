@@ -42,7 +42,7 @@ if __name__ == "__main__":
     ROI_det.display = None # Set true to see frame output from region detection
     
     # Define an initial bounding box
-    contour, (midXY) = ROI_det.find_overlay_region(frame, False)
+    contour, (midXY) = ROI_det.find_overlay_region(frame)
     # Value error very possible here, catch later when finishing this code
     x, y, w, h = cv2.boundingRect(contour)
     bbox = (x, y, w, h)

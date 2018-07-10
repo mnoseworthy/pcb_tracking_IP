@@ -17,18 +17,13 @@ import traceback
 from multi_display import ShowManyImages
 
 class pcb_region_detection():
-    def __init__(self, video_stream=None, frame=None):
+    def __init__(self, video_stream=None):
         ###################################################################
         #   Section: Define attributes
         ###################################################################
         # Capture object from opencv
         self.cap = None
-
-        # Most recently captured frame
-        if frame != None:
-            self.frame = frame
-        else:
-            self.frame = None
+        self.frame = None
 
         # Processing buffer
         self.buffer = {
@@ -68,7 +63,7 @@ class pcb_region_detection():
         ###################################################################
         #   Section: Define init control flow
         ###################################################################
-        if video_stream == None:
+        if isinstance(video_stream, bool):
             self.videoCapStart()
         else:
             self.cap = video_stream
@@ -207,7 +202,7 @@ class pcb_region_detection():
             return False
 
 
-    def find_overlay_region(self):
+    def find_overlay_region(self, frame=None):
         """
             Locates the PCB in the given image frame.
             @param img (cv2.image) - Pointer to an openCV2 image object, returned from imread().

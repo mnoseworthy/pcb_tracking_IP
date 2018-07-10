@@ -58,8 +58,9 @@ class PCB_Dataset(Dataset):
                 files = [f for f in listdir(subDir[0]) if isfile(join(subDir[0], f))]
                 for file in files:
                     if file.endswith(".jpg"):
-                        x = os.path.join(subDir[0], file)
-                        self.images.append(x)
+                        if isinstance(subDir[0], str):
+                            x = os.path.join(subDir[0], file)
+                            self.images.append(x)
             # initialize file count
             self.num_images = len(self.images)
             print(self.images)
@@ -87,7 +88,7 @@ class PCB_Dataset(Dataset):
                 threads = []
                 # Iterate over each image path and spawn a thread for each
                 for image in self.images:
-                    t = Process( target=self.threadWorker , args=( image )  )
+                    t = Process( target=self.threadWorker , args=( [str(image)] )  )
                     t.start()
                 # Wait for buffer batch to complete
                 while not callback(None, True):
