@@ -11,13 +11,13 @@ Operations:
 
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
+
 import traceback
 
 from multi_display import ShowManyImages
 
 class pcb_region_detection():
-    def __init__(self):
+    def __init__(self, video_stream=None, frame=None):
         ###################################################################
         #   Section: Define attributes
         ###################################################################
@@ -25,7 +25,10 @@ class pcb_region_detection():
         self.cap = None
 
         # Most recently captured frame
-        self.frame = None
+        if frame != None:
+            self.frame = frame
+        else:
+            self.frame = None
 
         # Processing buffer
         self.buffer = {
@@ -65,7 +68,10 @@ class pcb_region_detection():
         ###################################################################
         #   Section: Define init control flow
         ###################################################################
-        self.videoCapStart()
+        if video_stream == None:
+            self.videoCapStart()
+        else:
+            self.cap = video_stream
     
     def clearBuffers(self):
         """
@@ -211,6 +217,7 @@ class pcb_region_detection():
         """
         # Check if we need to pull a new frame
         if not isinstance(self.frame, list):
+            print("pcb region detection had to get own frame, consider passing a frame if using for tracking")
             self.getFrame()
 
         # Clear buffers

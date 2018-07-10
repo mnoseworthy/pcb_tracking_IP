@@ -4,18 +4,17 @@
 """
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
 import sys
 
-from src import pcb_region_from_video as pcb_reg
+from src.pcb_region_from_video import  pcb_region_detection as reg_det
 
 
 
 
 if __name__ == "__main__":
+
     # Set up tracker.
     # Instead of MIL, you can also use
-
     tracker_types = ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'GOTURN']
     tracker_type = tracker_types[2]
 
@@ -24,6 +23,8 @@ if __name__ == "__main__":
 
     # Read video
     video = cv2.VideoCapture(0)
+
+
 
     # Exit if video not opened.
     if not video.isOpened():
@@ -36,8 +37,13 @@ if __name__ == "__main__":
         print( 'Cannot read video file')
         sys.exit()
     
+    # Init ROI detection
+    ROI_det = reg_det(video_stream)
+    ROI_det.display = None # Set true to see frame output from region detection
+    
     # Define an initial bounding box
-    contour, (midXY) = pcb_reg.find_overlay_region(frame, False)
+    contour, (midXY) = ROI_det.find_overlay_region(frame, False)
+    # Value error very possible here, catch later when finishing this code
     x, y, w, h = cv2.boundingRect(contour)
     bbox = (x, y, w, h)
     

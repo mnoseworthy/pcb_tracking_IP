@@ -90,12 +90,14 @@ class BufferPoolResource:
                 self.buffer[index]["data"] = data
                 self.buffer[index]["written"] = True
 
-                print("Data written to buffer {0}: \n {1} \n Buffer {0} added back to pool".format(index, data))
+                #print("Data written to buffer {0}: \n {1}".format(index, data))
 
                 if self.batched:
                     # If batched, check if the batch is complete
                     if self.batch_complete():
                         self.join()
+                    else:
+                        print("Batch incomplete, remaining pool is {}".format(self.indexPool))
 
                 
             
@@ -117,10 +119,14 @@ class BufferPoolResource:
                             bufPool.__writeout(myBuffer, data)
                             
                 """
-                index = self.indexPool.pop()
+                pos = -1
+                index = self.indexPool[-1]
                 while self._is_leased(index):
-                    index = self.indexPool.pop()
+                    pos = pos - 1
+                    index = self.indexPool[pos]
 
+                print("Leasing index ", index)
+                del self.indexPool[pos]
                 self.buffer[index]["leased"] = True
                 return ( self.__make_callback, index )
             
@@ -174,6 +180,7 @@ class BufferPoolResource:
                 else:
                     if self.callback != None:
                         self.callback(self.buffer)
+                        self.callback = None
 
             def _is_leased(self, index):
                 """
