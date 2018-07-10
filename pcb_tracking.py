@@ -38,7 +38,7 @@ if __name__ == "__main__":
         sys.exit()
     
     # Init ROI detection
-    ROI_det = reg_det(video_stream)
+    ROI_det = reg_det(video)
     ROI_det.display = None # Set true to see frame output from region detection
     
     # Define an initial bounding box

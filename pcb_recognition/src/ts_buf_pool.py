@@ -26,6 +26,8 @@ From there either,
         ... stack accessing data ...
         buffer_pool.get(index)
 """
+from collections import Counter
+from multiprocessing import Lock, Queue, Value
 
 class BufferPoolResource:
     def __init__(self, *args, **kwargs):
@@ -57,54 +59,61 @@ class BufferPoolResource:
                 #}
 
                 # list of buffer_struct's
-                self.buffer  = range(length) 
-                # pool of index's
-                self.indexPool = [] 
+                self.bufferPool  = Queue()
+                self.outputQueue = Queue()
+                # Initialize queue
                 for i in range(length):
 
-                    self.buffer[i] = {
+                    newObj = {
                         "leased" : False,
                         "data" : None,
                         "Rx_count" : 0,
-                        "written" : False
+                        "written" : False,
+                        "index" : None
                     }
-                    self.indexPool.append(i)
-                
-
-
+                    self.bufferPool.put(newObj)
+                #print(len(self.buffer), length )
 
                 # Internals
                 self.length = length
-                self.leased = 0 # Number of successful calls to @__make
-                self.running = True
+                self.written = Value("i", 0)
+                self.leased = Value("i", 0)
+                self.running = Value("i", 1)
+
 
 
             #
             #   @brief Callback to write data
             #
-            def __make_callback(self, index, data):
-                
-                if not self._is_leased(index):
-                    raise ValueError("Buffer has already been written to.", index, data)
+            def __make_callback(self, index, lock, buf, data):
+                lock.acquire()
+                try:
+                    buf["data"] = data
+                    buf["written"] = True 
+                    self.written.value += 1
+                    self.outputQueue.put(buf, False)
+                    #print("Modified buffer {} : {}".format(index,self.buffer[index]))
 
-                self.buffer[index]["data"] = data
-                self.buffer[index]["written"] = True
+                    print("Data written to buffer {0}".format(index))
 
-                #print("Data written to buffer {0}: \n {1}".format(index, data))
-
-                if self.batched:
-                    # If batched, check if the batch is complete
-                    if self.batch_complete():
-                        self.join()
+                    if self.batched:
+                        # If batched, check if the batch is complete
+                        if self.batch_complete():
+                            self.join()
                     else:
-                        print("Batch incomplete, remaining pool is {}".format(self.indexPool))
+                        buf["leased"] = 0
+                        self.bufferPool.put(buf)
+                finally:
+                    lock.release()
 
                 
             
-            def make(self):
+            def make(self, lock, index):
                 """
                     @brief when called returns a handle that can be used to write to
                     the buffer, and a callback to release the data
+
+                    @param seed is any unique data that identifies the caller
                     
                     @ret (function pointer, buffer_index) - Hold this value in the thread,
                     when processing has finished and you wish to write-out to the buffer
@@ -119,16 +128,22 @@ class BufferPoolResource:
                             bufPool.__writeout(myBuffer, data)
                             
                 """
-                pos = -1
-                index = self.indexPool[-1]
-                while self._is_leased(index):
-                    pos = pos - 1
-                    index = self.indexPool[pos]
 
-                print("Leasing index ", index)
-                del self.indexPool[pos]
-                self.buffer[index]["leased"] = True
-                return ( self.__make_callback, index )
+
+                # Lock while allocating an index
+                lock.acquire()
+                try:
+                    print("Process claimed lock")
+                    buf = self.bufferPool.get()
+
+                    # Found index to lease, increment lease count
+                    self.leased.value  += 1
+                    print("Leasing index ", index)
+                    buf["index"] = index
+                    buf["leased"] = True
+                    return ( self.__make_callback, index, lock, buf )
+                finally:
+                    lock.release()
             
 
             def writeout(self, data, *eventData):
@@ -138,8 +153,8 @@ class BufferPoolResource:
                     @Param eventData:
                         (@ret from self.__make() , data_to_write)
                 """
-                callback, index = eventData[0]
-                callback(index, data)
+                callback, index, lock, buf = eventData[0]
+                callback(index, lock, buf, data)
             
 
 
@@ -151,19 +166,7 @@ class BufferPoolResource:
                 """
                     Retreives data
                 """
-                if self._is_leased(index):
-                    print("Buffer in use, cannot read")
-                    return False
-                else:
-                    # Release buffer and add index back to pool
-                    self.buffer[index]["released"] = True
-                    self.indexPool.append(index)
-
-                    if self.buffer[index]["written"]:
-                        # Return data
-                        return self.buffer[index]["data"]
-                    else:
-                        return False
+                return False
             
             def join(self, event=None):
                 """
@@ -179,33 +182,40 @@ class BufferPoolResource:
                         self.running = False
                 else:
                     if self.callback != None:
-                        self.callback(self.buffer)
+                        # Aggregate data
+                        tmp = []
+                        for i in range(self.length) :
+                            print(i)
+                            with self.outputQueue.get(False) as buf:
+                                if isinstance(buf, dict):
+                                    print("Adding data from index {} to output".format(buf["index"]))
+                                    tmp[ buf["index"] ] = buf["data"]
+                                # Release buffer if pooled
+                                if self.pooled:
+                                    buf["leased"] = False
+                                    self.bufferPool.put(buf)
+                        # return data
+                        self.callback(tmp)
+                        # Remove callback
                         self.callback = None
-
-            def _is_leased(self, index):
-                """
-                    @brief returns true if the buffer with this index is leased
-                """
-                return self.buffer[index]["leased"]
             
 
             def batch_complete(self):
                 """
                     @Brief Returns true if the batch is complete, false otherwise
                 """
-                # First try quick ways of checking
-                if len(self.indexPool) > 0:
-                    return False
-                else:
-                    for buf in self.buffer:
-                        if not buf['written']:
-                            return False
+                # Try quick ways of checking first
+                print(self.written.value, self.length)
+                if self.written.value == self.length:
+                    print("Returned true")
                     return True
+                else:
+                    return False
 
 
         ### __enter__()
-        print(self.args)
-        print(self.kwargs)
+        #print(self.args)
+        #print(self.kwargs)
         self.buffer_pool = BufferPool(*self.args, **self.kwargs)
         return self.buffer_pool
 

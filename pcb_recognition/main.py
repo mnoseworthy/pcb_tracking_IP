@@ -8,7 +8,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 import traceback
-from multiprocessing import Process
+from multiprocessing import Process, Lock
 # Pip requirements
 from torch.utils.data.dataset import Dataset
 import cv2
@@ -63,7 +63,7 @@ class PCB_Dataset(Dataset):
                             self.images.append(x)
             # initialize file count
             self.num_images = len(self.images)
-            print(self.images)
+            #print(self.images)
         
         def parseImages(self):
             """
@@ -81,29 +81,37 @@ class PCB_Dataset(Dataset):
                 else:
                     print("Callback ran")
                     self.images = data
+                    print(data)
                     self.pp = False
 
-            with BufferPoolResource(self.num_images, "batched", callback) as BufferPool:
+            # Init a lock for threads to use during buffer requests
+            lock = Lock()
+
+            with BufferPoolResource(self.num_images, "batched",  callback) as BufferPool:
                 self.BufferPool = BufferPool
                 threads = []
                 # Iterate over each image path and spawn a thread for each
+                i = 0
                 for image in self.images:
-                    t = Process( target=self.threadWorker , args=( [str(image)] )  )
+                    t = Process( name=str(image), target=self.threadWorker ,  args=( str(image), lock, int(i)   )  )
                     t.start()
+                    i = i + 1
                 # Wait for buffer batch to complete
                 while not callback(None, True):
                     pass
                 
+                
+
                 for t in threads:
                     t.join()
         
-        def threadWorker(self, imagePath):
+        def threadWorker(self, imagePath, lock, index):
             """
                 Defines the task each thread will run during pre-processing the data-set
             """
             if self.BufferPool:
                 # Claim a buffer in the pool
-                buf = self.BufferPool.make()
+                buf = self.BufferPool.make(lock, index) # Use image path as seed, as it is unique
                 # Load image
                 img = cv2.imread(imagePath)
                 # Preform pre-processing 
