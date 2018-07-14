@@ -317,6 +317,7 @@ class pcb_region_detection():
 
     def mainThread(self):
         self.display = True
+        self.videoCapStart()
         while(1):
             try:
                 self.getFrame()
@@ -335,5 +336,6 @@ class pcb_region_detection():
 if __name__ == "__main__":
     # Create object and start main thread
     pcb_det = pcb_region_detection()
+    pcb_det.display = True
     pcb_det.mainThread()
 
