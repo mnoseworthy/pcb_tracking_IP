@@ -271,35 +271,37 @@ class pcb_region_detection():
             p1 = (int(bbox[0]), int(bbox[1]))
             p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
             cv2.rectangle(self.buffer["Output"], p1, p2, (0,255,0), 2, 1)
+        else:
+            self.buffer["Output"] = self.frame
 
-            # If true, output all intermediate images as well as Input/Output
-            if self.display == True: 
-                
-                # Add text to images
-                self.addText(self.buffer["Input"], "Input")
-                self.addText(self.buffer["Output"], "Output")
-                self.addText(self.buffer["equalized"], "equalized")
-                self.addText(self.buffer["morphed"], "morphed")
-                self.addText(self.buffer["thresholded"], "thresholded")
-                self.addText(self.buffer["blurred"], "hsv transform & blur")
-                self.addText(self.buffer["edged"], "edged")
-                #self.addText(self.buffer["hough"], "hough transform")
-                img_list = [
-                    self.buffer["Input"],                  
-                    self.buffer["equalized"],
-                    self.buffer["blurred"],
-                    self.buffer["thresholded"],
-                    self.buffer["morphed"],       
-                    self.buffer["edged"],
-                    #self.buffer["hough"],
-                    self.buffer["Output"]
-                ]
-                
-                ShowManyImages("images", img_list)
-            # If false output just Input/Output frames
-            elif self.display == False:
-                cv2.imshow("Input", self.buffer["Input"])
-                cv2.imshow("Output", self.buffer["Output"])
+        # If true, output all intermediate images as well as Input/Output
+        if self.display == True: 
+            
+            # Add text to images
+            self.addText(self.buffer["Input"], "Input")
+            self.addText(self.buffer["Output"], "Output")
+            self.addText(self.buffer["equalized"], "equalized")
+            self.addText(self.buffer["morphed"], "morphed")
+            self.addText(self.buffer["thresholded"], "thresholded")
+            self.addText(self.buffer["blurred"], "hsv transform & blur")
+            self.addText(self.buffer["edged"], "edged")
+            #self.addText(self.buffer["hough"], "hough transform")
+            img_list = [
+                self.buffer["Input"],                  
+                self.buffer["equalized"],
+                self.buffer["blurred"],
+                self.buffer["thresholded"],
+                self.buffer["morphed"],       
+                self.buffer["edged"],
+                #self.buffer["hough"],
+                self.buffer["Output"]
+            ]
+            
+            ShowManyImages("images", img_list)
+        # If false output just Input/Output frames
+        elif self.display == False:
+            cv2.imshow("Input", self.buffer["Input"])
+            cv2.imshow("Output", self.buffer["Output"])
    
             # Return the contour & centre coordinates
             ret = [result, [x,y] ]
