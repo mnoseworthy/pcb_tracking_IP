@@ -5,10 +5,13 @@
 import cv2
 import numpy as np
 import sys
+from time import sleep
 
 from src.pcb_region_from_video import  pcb_region_detection as reg_det
 
-
+FROM_CAM = False
+VID_FILE = "./assets/MVI_1002.MOV"
+VID_FILE = "./assets/MVI_1003.MOV"
 
 
 if __name__ == "__main__":
@@ -22,7 +25,11 @@ if __name__ == "__main__":
 
 
     # Read video
-    video = cv2.VideoCapture(0)
+    if FROM_CAM:
+        video = cv2.VideoCapture(0)
+    else:
+        video = cv2.VideoCapture(VID_FILE)
+    sleep(1)
 
 
 
@@ -54,7 +61,8 @@ if __name__ == "__main__":
 
     # Initialize tracker with first frame and bounding box
     ok = tracker.init(frame, bbox)
-
+    cv2.namedWindow("Template matching tracker", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty("Template matching tracker", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     while True:
         # Read a new frame
         ok, frame = video.read()
@@ -86,8 +94,18 @@ if __name__ == "__main__":
         # Display FPS on frame
         cv2.putText(frame, "FPS : " + str(int(fps)), (100,50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50), 2);
 
+        # Check output from frame ROI
+        contour, (midXY) = ROI_det.find_overlay_region(frame)
+        # Value error very possible here, catch later when finishing this code
+        x, y, w, h = cv2.boundingRect(contour)
+        bbox = (x, y, w, h)
+        # Tracking success
+        p1 = (int(bbox[0]), int(bbox[1]))
+        p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
+        cv2.rectangle(frame, p1, p2, (0,255,0), 2, 1)
+
         # Display result
-        cv2.imshow("Tracking", frame)
+        cv2.imshow("Template matching tracker", frame)
 
         # Exit if ESC pressed
         k = cv2.waitKey(1) & 0xff

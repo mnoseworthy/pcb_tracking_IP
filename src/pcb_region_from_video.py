@@ -16,6 +16,9 @@ import traceback
 
 from multi_display import ShowManyImages
 
+FROM_CAM = False
+VID_FILE = "../assets/MVI_1003.MOV"
+
 class pcb_region_detection():
     def __init__(self, video_stream=None):
         ###################################################################
@@ -53,9 +56,9 @@ class pcb_region_detection():
             self.bgr_to_hsv,
             self.blur_before_thresh,
             self.hsv_green_thresholding,
-            #self.morphology_operation,
-            self.canny_edge_detection,
             self.morphology_operation,
+            self.canny_edge_detection,
+            #self.morphology_operation,
             #self.hough_line_trans,
             self.contour_filter
         ]
@@ -213,6 +216,7 @@ class pcb_region_detection():
         # Check if we need to pull a new frame
         if not isinstance(self.frame, list):
             print("pcb region detection had to get own frame, consider passing a frame if using for tracking")
+            print(type(self.frame))
             self.getFrame()
 
         # Clear buffers
@@ -230,7 +234,7 @@ class pcb_region_detection():
             result = "Unset"
             for funct in self.function_pipe:
                 # First function requires input frame
-                if isinstance(result, str) and result == "Unset":
+                if result == "Unset":
                     result = funct(self.frame)
                 else:
                     result = funct(result)
@@ -261,9 +265,9 @@ class pcb_region_detection():
                 self.addText(self.buffer["Input"], "Input")
                 self.addText(self.buffer["Output"], "Output")
                 self.addText(self.buffer["equalized"], "equalized")
-                #self.addText(self.buffer["morphed"], "morphed")
+                self.addText(self.buffer["morphed"], "morphed")
                 self.addText(self.buffer["thresholded"], "thresholded")
-                self.addText(self.buffer["blurred"], "blurred")
+                self.addText(self.buffer["blurred"], "hsv transform & blur")
                 self.addText(self.buffer["edged"], "edged")
                 #self.addText(self.buffer["hough"], "hough transform")
                 img_list = [
@@ -271,7 +275,7 @@ class pcb_region_detection():
                     self.buffer["equalized"],
                     self.buffer["blurred"],
                     self.buffer["thresholded"],
-                    #self.buffer["morphed"],       
+                    self.buffer["morphed"],       
                     self.buffer["edged"],
                     #self.buffer["hough"],
                     self.buffer["Output"]
@@ -304,8 +308,9 @@ class pcb_region_detection():
         lineType = 2
         cv2.putText(img, text, top_left, font, fontScale, fontColor, lineType)
 
-    def videoCapStart(self):
-        self.cap = cv2.VideoCapture(0)
+    def videoCapStart(self, source=0):
+        print(source)
+        self.cap = cv2.VideoCapture(source)
         return self.cap
 
     def videoCapStop(self):
@@ -313,14 +318,19 @@ class pcb_region_detection():
     
     def getFrame(self):
         ret, self.frame = self.cap.read()
+        while not ret:
+            ret, self.frame = self.cap.read()
+        print("Ret from frame pull: {}".format(ret))
         return self.frame
 
-    def mainThread(self):
+    def mainThread(self, source=0):
         self.display = True
-        self.videoCapStart()
+        if not FROM_CAM:
+            self.videoCapStart(VID_FILE)
         while(1):
             try:
                 frame = self.getFrame()
+                print(type(frame))
                 self.find_overlay_region(frame)
                 k= cv2.waitKey(5)
                 if k==27:
