@@ -53,10 +53,10 @@ class pcb_region_detection():
             self.bgr_to_hsv,
             self.blur_before_thresh,
             self.hsv_green_thresholding,
-            self.morphology_operation,
+            #self.morphology_operation,
             self.canny_edge_detection,
             self.morphology_operation,
-            self.hough_line_trans,
+            #self.hough_line_trans,
             self.contour_filter
         ]
 
@@ -230,7 +230,7 @@ class pcb_region_detection():
             result = "Unset"
             for funct in self.function_pipe:
                 # First function requires input frame
-                if result == "Unset":
+                if isinstance(result, str) and result == "Unset":
                     result = funct(self.frame)
                 else:
                     result = funct(result)
@@ -261,19 +261,19 @@ class pcb_region_detection():
                 self.addText(self.buffer["Input"], "Input")
                 self.addText(self.buffer["Output"], "Output")
                 self.addText(self.buffer["equalized"], "equalized")
-                self.addText(self.buffer["morphed"], "morphed")
+                #self.addText(self.buffer["morphed"], "morphed")
                 self.addText(self.buffer["thresholded"], "thresholded")
                 self.addText(self.buffer["blurred"], "blurred")
                 self.addText(self.buffer["edged"], "edged")
-                self.addText(self.buffer["hough"], "hough transform")
+                #self.addText(self.buffer["hough"], "hough transform")
                 img_list = [
                     self.buffer["Input"],                  
                     self.buffer["equalized"],
-                    #self.buffer["blurred"],
+                    self.buffer["blurred"],
                     self.buffer["thresholded"],
-                    self.buffer["morphed"],       
+                    #self.buffer["morphed"],       
                     self.buffer["edged"],
-                    self.buffer["hough"],
+                    #self.buffer["hough"],
                     self.buffer["Output"]
                 ]
                 
@@ -320,8 +320,8 @@ class pcb_region_detection():
         self.videoCapStart()
         while(1):
             try:
-                self.getFrame()
-                self.find_overlay_region()
+                frame = self.getFrame()
+                self.find_overlay_region(frame)
                 k= cv2.waitKey(5)
                 if k==27:
                     break
