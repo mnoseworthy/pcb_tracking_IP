@@ -10,8 +10,8 @@ from time import sleep
 from src.pcb_region_from_video import  pcb_region_detection as reg_det
 
 FROM_CAM = False
-VID_FILE = "./assets/MVI_1002.MOV"
-VID_FILE = "./assets/MVI_1003.MOV"
+VID_FILE = "./assets/tracking1.MOV"
+
 
 
 if __name__ == "__main__":

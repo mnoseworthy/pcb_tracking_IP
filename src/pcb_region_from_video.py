@@ -16,8 +16,8 @@ import traceback
 
 from multi_display import ShowManyImages
 
-FROM_CAM = False
-VID_FILE = "../assets/MVI_1003.MOV"
+FROM_CAM = True
+VID_FILE = "../assets/tracking1.MOV"
 
 class pcb_region_detection():
     def __init__(self, video_stream=None):
@@ -113,8 +113,11 @@ class pcb_region_detection():
             Uses a HSV format image, and thresholds based on hue to remove all colors
             but the range of greens we expect a PCB to be
         """
-        lower = np.array([45,25,0])
-        upper = np.array([82, 140,180])
+        #lower = np.array([45,25,0])
+        #upper = np.array([82, 140,180])
+        lower = np.array([45,70,70])
+        upper = np.array([82, 255, 255])
+        
         #lower = np.array([0,100,100])
         #upper = np.array([180, 180,180])
         green_mask = cv2.inRange(img, lower, upper)
@@ -125,8 +128,9 @@ class pcb_region_detection():
         """
             Uses morphology to attempt to reduce salt and pepper noise
         """
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15,15))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25,25))
         self.buffer["morphed"] = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
+        self.buffer["morphed"] = cv2.morphologyEx(self.buffer["morphed"], cv2.MORPH_OPEN, kernel)
         return self.buffer["morphed"]
 
     def hough_line_trans(self, img):
@@ -135,7 +139,7 @@ class pcb_region_detection():
         """
         im = img.copy()
         lines = cv2.HoughLines(im,1,np.pi/180,200)
-        print(type(lines))
+        #print(type(lines))
         if isinstance(lines, np.ndarray):
             for line in lines:
                 for rho,theta in line:
@@ -198,7 +202,7 @@ class pcb_region_detection():
                 break
         """
 
-        if(len(cnts)):
+        if(len(cnts)>0):
             return cnts[-1]
         else:
             self.failure = True
@@ -213,10 +217,12 @@ class pcb_region_detection():
             @returns [(cv2.contour), [(int, int)] - Returns a tuple containing 1) the contour object returned by opencv & 2)
                 the x,y co-ordinates of the centre point of the contour
         """
+        # Init failure flag
+        self.failure = False
         # Check if we need to pull a new frame
         if not isinstance(self.frame, list):
             print("pcb region detection had to get own frame, consider passing a frame if using for tracking")
-            print(type(self.frame))
+            #print(type(self.frame))
             self.getFrame()
 
         # Clear buffers
@@ -240,7 +246,7 @@ class pcb_region_detection():
                     result = funct(result)
 
                 if not isinstance(result, np.ndarray):
-                    print("Type returned was {}".format(type(result)))
+                    #print("Type returned was {}".format(type(result)))
                     self.failure = True
                     print("Failure occured during function {}".format(funct) )
                     break
@@ -256,7 +262,15 @@ class pcb_region_detection():
                 x = int( moment["m10"] / moment['m00'] )
                 y = int( moment['m01'] / moment['m00'] )
 
-            self.buffer["Output"] = cv2.drawContours(self.frame, [result], -1, (0, 0, 255), 1)
+            #self.buffer["Output"] = cv2.drawContours(self.frame, [result], -1, (0, 0, 255), 1)
+            self.buffer["Output"] = self.frame
+            # Value error very possible here, catch later when finishing this code
+            x, y, w, h = cv2.boundingRect(result)
+            bbox = (x, y, w, h)
+            # Tracking success
+            p1 = (int(bbox[0]), int(bbox[1]))
+            p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
+            cv2.rectangle(self.buffer["Output"], p1, p2, (0,255,0), 2, 1)
 
             # If true, output all intermediate images as well as Input/Output
             if self.display == True: 
@@ -309,7 +323,7 @@ class pcb_region_detection():
         cv2.putText(img, text, top_left, font, fontScale, fontColor, lineType)
 
     def videoCapStart(self, source=0):
-        print(source)
+        #print(source)
         self.cap = cv2.VideoCapture(source)
         return self.cap
 
@@ -320,17 +334,19 @@ class pcb_region_detection():
         ret, self.frame = self.cap.read()
         while not ret:
             ret, self.frame = self.cap.read()
-        print("Ret from frame pull: {}".format(ret))
+        #print("Ret from frame pull: {}".format(ret))
         return self.frame
 
     def mainThread(self, source=0):
         self.display = True
         if not FROM_CAM:
             self.videoCapStart(VID_FILE)
+        else:
+            self.videoCapStart(0)
         while(1):
             try:
                 frame = self.getFrame()
-                print(type(frame))
+                #print(type(frame))
                 self.find_overlay_region(frame)
                 k= cv2.waitKey(5)
                 if k==27:
