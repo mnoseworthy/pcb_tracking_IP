@@ -2,3 +2,6 @@
 .vscode/settings.json
 *.mov
 *.MOV
+*.spec
+build
+dist

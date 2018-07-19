@@ -89,15 +89,15 @@ def ShowManyImages(title, images):
 
     # Create canvas image
     dims = scaleMap[numImages]
-    canvas_image = np.zeros((dims['h']*dims['scale'] + dims['scale'], dims['w']*dims['scale']+ dims['scale'], 3), np.uint8)
+    canvas_image = np.zeros((dims['h']*dims['scale'] , dims['w']*dims['scale'], 3), np.uint8)
 
     # Iterate over input images
     imgIndex = 0
     m = 20
     n = 20
-    print("Iterating over {} images".format(numImages) )
+    #print("Iterating over {} images".format(numImages) )
     for img in images:
-        print("Image index {}".format(imgIndex))
+        #print("Image index {}".format(imgIndex))
         image = img.copy()
         try:    
             # get heightxwidth of image
@@ -108,7 +108,7 @@ def ShowManyImages(title, images):
                     continue
             else:
                 gs = True
-                print("Input was grayscale")
+                #print("Input was grayscale")
                 x, y = image.shape
                 if x <= 0 or y <= 0:
                     imgIndex = imgIndex + 1
@@ -137,7 +137,7 @@ def ShowManyImages(title, images):
             height = int(y/scale)
             width = int(x/scale)
             #print("Height {}, width {}".format(height, width))
-            print("m {}, n {}".format(m,n))
+            #print("m {}, n {}".format(m,n))
             #print("x {}, y {}".format(x/scale,y/scale))
             
             # Resize image

@@ -15,13 +15,13 @@ import sys
 import traceback
 import argparse
 from time import sleep
-
+from threading import Event
 from multi_display import ShowManyImages
 
 
 # Adjust default behavior
 FROM_CAM = False
-VID_FILE = None
+VID_FILE = 0
 STEP_THROUGH_FRAMES = False
 ONE_FRAME_ONLY = False
 DISPLAY_ALL = False
@@ -371,6 +371,7 @@ class pcb_region_detection():
         return self.frame
 
     def mainThread(self, source=0):
+
         if not FROM_CAM:
             self.videoCapStart(VID_FILE)
         else:
@@ -422,11 +423,11 @@ class pcb_region_detection():
 if __name__ == "__main__":
     # Add argparser
     parser = argparse.ArgumentParser(description='PCB Region Detection')
-    parser.add_argument('--from-cam', dest='FROM_CAM', action='store_true')
-    parser.add_argument('--step-through-frame', dest='STEP_THROUGH_FRAME', action='store_true')
-    parser.add_argument('--one-frame-only', dest='ONE_FRAME_ONLY', action='store_true')
-    parser.add_argument('--display-all', dest='DISPLAY_ALL', action='store_true')
-    parser.add_argument('video_path')
+    parser.add_argument('--from-cam', dest='FROM_CAM', action='store_true', help='Set to use camera feed')
+    parser.add_argument('--step-through-frame', dest='STEP_THROUGH_FRAME', action='store_true', help='If set, press space to move through frames, esc to exit.')
+    parser.add_argument('--one-frame-only', dest='ONE_FRAME_ONLY', action='store_true', help='Runs a single frame through, and halts until esc pressed.')
+    parser.add_argument('--display-all', dest='DISPLAY_ALL', action='store_true', help='If set will display intermediate processing frames.')
+    parser.add_argument('video_path', help='path to video file if not using camera')
     # Parse args with some nice ugly if's
     ARGS = parser.parse_args()
     print(ARGS)
@@ -439,7 +440,6 @@ if __name__ == "__main__":
     if ARGS.DISPLAY_ALL:
         DISPLAY_ALL = True
     VID_FILE = ARGS.video_path
-    print(VID_FILE)
     
     # Create object and start main thread
     pcb_det = pcb_region_detection()
