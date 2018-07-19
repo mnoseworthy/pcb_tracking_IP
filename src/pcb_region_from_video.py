@@ -11,13 +11,16 @@ Operations:
 
 import cv2
 import numpy as np
-
+import sys
 import traceback
 
 from multi_display import ShowManyImages
+from threading import Event
 
-FROM_CAM = True
+FROM_CAM = False
 VID_FILE = "../assets/tracking1.MOV"
+STEP_THROUGH_FRAMES = True
+ONE_FRAME_ONLY = False
 
 class pcb_region_detection():
     def __init__(self, video_stream=None):
@@ -32,9 +35,13 @@ class pcb_region_detection():
         self.buffer = {
             "Input" : None,
             "equalized" : None,
+            "bgr"   : None,
+            "grayscale" : None,
+            "hsv"  : None,
             "blurred" : None,
             "thresholded" : None,
-            "morphed" : None,
+            "morphed_close" : None,
+            "morphed_open" : None,
             "edged" : None,
             "contours" : None,
             "hough" : None,
@@ -56,7 +63,9 @@ class pcb_region_detection():
             self.bgr_to_hsv,
             self.blur_before_thresh,
             self.hsv_green_thresholding,
+            
             self.morphology_operation,
+            self.hsv_to_gray,
             self.canny_edge_detection,
             #self.morphology_operation,
             #self.hough_line_trans,
@@ -85,27 +94,30 @@ class pcb_region_detection():
         yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
         yuv[:,:,0] = cv2.equalizeHist(yuv[:,:,0])
         self.buffer["equalized"] = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
+        #self.buffer["equalized"] = img
         return self.buffer["equalized"]
     
     def bgr_to_hsv(self, img):
         """
             Converts a bgr array to hsv format
         """
-        return cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        self.buffer["hsv"] = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        return self.buffer["hsv"]
     
     def hsv_to_gray(self, img):
         """
             Converts HSV image to Grayscale
         """
         bgr = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
-        return cv2.cvtColor(img, cv2.IMREAD_GRAYSCALE)
+        self.buffer["grayscale"] = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+        return self.buffer["grayscale"]
 
     def blur_before_thresh(self, img):
         """
             Blurs an image, to be used before inputing the return through
             a thresholding algorithm
         """
-        self.buffer["blurred"] = cv2.medianBlur(img, 1)
+        self.buffer["blurred"] = cv2.medianBlur(img, 5)
         return self.buffer["blurred"]
 
     def hsv_green_thresholding(self, img):
@@ -128,10 +140,11 @@ class pcb_region_detection():
         """
             Uses morphology to attempt to reduce salt and pepper noise
         """
+
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25,25))
-        self.buffer["morphed"] = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
-        self.buffer["morphed"] = cv2.morphologyEx(self.buffer["morphed"], cv2.MORPH_OPEN, kernel)
-        return self.buffer["morphed"]
+        self.buffer["morphed_close"] = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
+        self.buffer["morphed_open"] = cv2.morphologyEx(self.buffer["morphed_close"], cv2.MORPH_OPEN, kernel)
+        return self.buffer["morphed_open"]
 
     def hough_line_trans(self, img):
         """
@@ -162,9 +175,9 @@ class pcb_region_detection():
         """
         sigma = 0.33
         v = np.median(img)
-        upper = int(max(0, (1.0 - sigma) * v))
+        lower = int(max(0, (1.0 - sigma) * v))
         upper = int(max(0, (1.0 + sigma) * v))
-        self.buffer["edged"] = cv2.Canny(img,100,110)
+        self.buffer["edged"] = cv2.Canny(img,lower,upper)
         return self.buffer["edged"]
 
     def contour_filter(self, img):
@@ -271,6 +284,10 @@ class pcb_region_detection():
             p1 = (int(bbox[0]), int(bbox[1]))
             p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
             cv2.rectangle(self.buffer["Output"], p1, p2, (0,255,0), 2, 1)
+
+            # Return the contour & centre coordinates
+            ret = [result, [x,y] ]
+
         else:
             self.buffer["Output"] = self.frame
 
@@ -302,10 +319,16 @@ class pcb_region_detection():
         elif self.display == False:
             cv2.imshow("Input", self.buffer["Input"])
             cv2.imshow("Output", self.buffer["Output"])
+            cv2.imshow("equalized",self.buffer["equalized"]) 
+            cv2.imshow("morphed_open", self.buffer["morphed_open"] )
+            cv2.imshow("hsv", self.buffer["hsv"] )
+            cv2.imshow("grayscale", self.buffer["grayscale"] )
+            cv2.imshow("morphed_close", self.buffer["morphed_close"] )
+            cv2.imshow("thresholded", self.buffer["thresholded"] )
+            cv2.imshow("blur", self.buffer["blurred"])
+            cv2.imshow("edged", self.buffer["edged"])
    
-            # Return the contour & centre coordinates
-            ret = [result, [x,y] ]
-
+        
         
         # Clear processed frame
         self.frame = None
@@ -340,30 +363,45 @@ class pcb_region_detection():
         return self.frame
 
     def mainThread(self, source=0):
-        self.display = True
         if not FROM_CAM:
             self.videoCapStart(VID_FILE)
         else:
             self.videoCapStart(0)
-        while(1):
-            try:
-                frame = self.getFrame()
-                #print(type(frame))
-                self.find_overlay_region(frame)
-                k= cv2.waitKey(5)
-                if k==27:
+        if ONE_FRAME_ONLY:
+            frame = self.getFrame()
+            self.find_overlay_region(frame)
+            Event().wait()
+        else:
+            while(1):
+                try:
+                    frame = self.getFrame()
+                    self.find_overlay_region(frame)
+                    
+                    
+                    if STEP_THROUGH_FRAMES:
+                        # Wait forever for a keypress
+                        k = cv2.waitKey(0)
+                        # Exits when spacebar pressed, quits when esc pressed
+                        while k != 32:
+                            if k == 27:
+                                sys.exit()
+                            k = cv2.waitKey(0)
+                    else:
+                        # Just check if esc pressed
+                        k= cv2.waitKey(5)
+                        if k==27:
+                            break
+                except Exception, err:
+                    traceback.print_exc()
+                    self.videoCapStop()
                     break
-            except Exception, err:
-                traceback.print_exc()
-                self.videoCapStop()
-                break
-        return False
- 
+            return False
+    
 
 
 if __name__ == "__main__":
     # Create object and start main thread
     pcb_det = pcb_region_detection()
-    pcb_det.display = True
+    pcb_det.display = False
     pcb_det.mainThread()
 
