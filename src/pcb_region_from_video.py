@@ -13,14 +13,18 @@ import cv2
 import numpy as np
 import sys
 import traceback
+import argparse
+from time import sleep
 
 from multi_display import ShowManyImages
-from threading import Event
 
+
+# Adjust default behavior
 FROM_CAM = False
-VID_FILE = "../assets/tracking1.MOV"
-STEP_THROUGH_FRAMES = True
+VID_FILE = None
+STEP_THROUGH_FRAMES = False
 ONE_FRAME_ONLY = False
+DISPLAY_ALL = False
 
 class pcb_region_detection():
     def __init__(self, video_stream=None):
@@ -30,15 +34,17 @@ class pcb_region_detection():
         # Capture object from opencv
         self.cap = None
         self.frame = None
+        self.total_video_frames = None
+        self.frame_count = 1
 
         # Processing buffer
         self.buffer = {
-            "Input" : None,
+            "Input"     : None,
             "equalized" : None,
-            "bgr"   : None,
+            "bgr"       : None,
             "grayscale" : None,
-            "hsv"  : None,
-            "blurred" : None,
+            "hsv"       : None,
+            "blurred"   : None,
             "thresholded" : None,
             "morphed_close" : None,
             "morphed_open" : None,
@@ -51,10 +57,9 @@ class pcb_region_detection():
         # Processing error flag
         self.failure = False
 
-        # Flag to determine weather or not to display results
-        # False = Just display output frame
+        # Flag to determine how to display results
+        # False = Display everything in separate windows
         # True = Display all 
-        # None = no display
         self.display = None
 
         # List of function pointers which the input frame is to be passed through
@@ -75,6 +80,7 @@ class pcb_region_detection():
         ###################################################################
         #   Section: Define init control flow
         ###################################################################
+        # Obtain/start video stream
         if isinstance(video_stream, bool):
             self.videoCapStart()
         else:
@@ -233,7 +239,7 @@ class pcb_region_detection():
         # Init failure flag
         self.failure = False
         # Check if we need to pull a new frame
-        if not isinstance(self.frame, list):
+        if not isinstance(self.frame, np.ndarray):
             print("pcb region detection had to get own frame, consider passing a frame if using for tracking")
             #print(type(self.frame))
             self.getFrame()
@@ -253,7 +259,7 @@ class pcb_region_detection():
             result = "Unset"
             for funct in self.function_pipe:
                 # First function requires input frame
-                if result == "Unset":
+                if isinstance(result, str) and result == "Unset":
                     result = funct(self.frame)
                 else:
                     result = funct(result)
@@ -297,36 +303,33 @@ class pcb_region_detection():
             # Add text to images
             self.addText(self.buffer["Input"], "Input")
             self.addText(self.buffer["Output"], "Output")
-            self.addText(self.buffer["equalized"], "equalized")
-            self.addText(self.buffer["morphed"], "morphed")
-            self.addText(self.buffer["thresholded"], "thresholded")
-            self.addText(self.buffer["blurred"], "hsv transform & blur")
+            self.addText(self.buffer["equalized"], "Equalized")
+            self.addText(self.buffer["morphed_open"], "Morphed Open")
+            self.addText(self.buffer["morphed_close"], "Morphed Close")
+            self.addText(self.buffer["thresholded"], "Thresholded")
+            self.addText(self.buffer["blurred"], "Median Blur")
             self.addText(self.buffer["edged"], "edged")
+            self.addText(self.buffer["hsv"], "HSV")
             #self.addText(self.buffer["hough"], "hough transform")
             img_list = [
-                self.buffer["Input"],                  
+                self.buffer["Input"],  
                 self.buffer["equalized"],
+                self.buffer["hsv"],
                 self.buffer["blurred"],
                 self.buffer["thresholded"],
-                self.buffer["morphed"],       
+                self.buffer["morphed_close"], 
+                self.buffer["morphed_open"], 
                 self.buffer["edged"],
-                #self.buffer["hough"],
-                self.buffer["Output"]
+                self.buffer["Output"]            
             ]
             
             ShowManyImages("images", img_list)
         # If false output just Input/Output frames
         elif self.display == False:
-            cv2.imshow("Input", self.buffer["Input"])
+            cv2.namedWindow("Output", cv2.WND_PROP_FULLSCREEN)
+            cv2.setWindowProperty("Output", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
             cv2.imshow("Output", self.buffer["Output"])
-            cv2.imshow("equalized",self.buffer["equalized"]) 
-            cv2.imshow("morphed_open", self.buffer["morphed_open"] )
-            cv2.imshow("hsv", self.buffer["hsv"] )
-            cv2.imshow("grayscale", self.buffer["grayscale"] )
-            cv2.imshow("morphed_close", self.buffer["morphed_close"] )
-            cv2.imshow("thresholded", self.buffer["thresholded"] )
-            cv2.imshow("blur", self.buffer["blurred"])
-            cv2.imshow("edged", self.buffer["edged"])
+
    
         
         
@@ -350,6 +353,8 @@ class pcb_region_detection():
     def videoCapStart(self, source=0):
         #print(source)
         self.cap = cv2.VideoCapture(source)
+        # Update # of frames in video
+        self.total_video_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         return self.cap
 
     def videoCapStop(self):
@@ -358,8 +363,11 @@ class pcb_region_detection():
     def getFrame(self):
         ret, self.frame = self.cap.read()
         while not ret:
+            print("Could not get video frame...\n Either the video path doesn't exist, or no webcam is available.")
             ret, self.frame = self.cap.read()
+            sleep(1)
         #print("Ret from frame pull: {}".format(ret))
+        self.frame_count = self.frame_count + 1
         return self.frame
 
     def mainThread(self, source=0):
@@ -379,6 +387,8 @@ class pcb_region_detection():
                     
                     
                     if STEP_THROUGH_FRAMES:
+                        #If the last frame is reached, reset the capture and the frame_counter                   
+                        print( "Frame {}/{}".format( self.frame_count, self.total_video_frames) )                       
                         # Wait forever for a keypress
                         k = cv2.waitKey(0)
                         # Exits when spacebar pressed, quits when esc pressed
@@ -391,6 +401,15 @@ class pcb_region_detection():
                         k= cv2.waitKey(5)
                         if k==27:
                             break
+                    
+                    #Handle looping video
+                    if self.frame_count == self.total_video_frames:
+                        self.frame_count = 1 #Or whatever as long as it is the same as next line
+                        if not FROM_CAM:
+                            self.videoCapStart(VID_FILE)
+                        else:
+                            self.videoCapStart(0)
+
                 except Exception, err:
                     traceback.print_exc()
                     self.videoCapStop()
@@ -399,9 +418,30 @@ class pcb_region_detection():
     
 
 
+
 if __name__ == "__main__":
+    # Add argparser
+    parser = argparse.ArgumentParser(description='PCB Region Detection')
+    parser.add_argument('--from-cam', dest='FROM_CAM', action='store_true')
+    parser.add_argument('--step-through-frame', dest='STEP_THROUGH_FRAME', action='store_true')
+    parser.add_argument('--one-frame-only', dest='ONE_FRAME_ONLY', action='store_true')
+    parser.add_argument('--display-all', dest='DISPLAY_ALL', action='store_true')
+    parser.add_argument('video_path')
+    # Parse args with some nice ugly if's
+    ARGS = parser.parse_args()
+    print(ARGS)
+    if ARGS.FROM_CAM:
+        FROM_CAM = True
+    if ARGS.STEP_THROUGH_FRAME:
+        STEP_THROUGH_FRAMES = True
+    if ARGS.ONE_FRAME_ONLY:
+        ONE_FRAME_ONLY = True
+    if ARGS.DISPLAY_ALL:
+        DISPLAY_ALL = True
+    VID_FILE = ARGS.video_path
+    print(VID_FILE)
+    
     # Create object and start main thread
     pcb_det = pcb_region_detection()
-    pcb_det.display = False
+    pcb_det.display = DISPLAY_ALL
     pcb_det.mainThread()
-

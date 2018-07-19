@@ -80,8 +80,8 @@ def ShowManyImages(title, images):
         5 : {"h":2, "w":3, "scale":200},
         6 : {"h":2, "w":3, "scale":200},
         7 : {"h":2, "w":4, "scale":200},
-        8 : {"h":2, "w":4, "scale":200},
-        9 : {"h":3, "w":4, "scale":150},
+        8 : {"h":3, "w":3, "scale":150},
+        9 : {"h":3, "w":3, "scale":150},
         10 : {"h":3, "w":4, "scale":150},
         11 : {"h":3, "w":4, "scale":150},
         12 :{"h":3, "w":4, "scale":150}
@@ -89,10 +89,10 @@ def ShowManyImages(title, images):
 
     # Create canvas image
     dims = scaleMap[numImages]
-    canvas_image = np.zeros((dims['h']*dims['scale']+50*dims['h'], dims['w']*dims['scale']+50*dims['w'], 3), np.uint8)
+    canvas_image = np.zeros((dims['h']*dims['scale'] + dims['scale'], dims['w']*dims['scale']+ dims['scale'], 3), np.uint8)
 
     # Iterate over input images
-    imgIndex = 1
+    imgIndex = 0
     m = 20
     n = 20
     print("Iterating over {} images".format(numImages) )
