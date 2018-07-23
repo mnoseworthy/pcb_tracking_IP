@@ -1,0 +1,1 @@
+py -2 ../src/pcb_region_from_video.py   --from-cam 0
