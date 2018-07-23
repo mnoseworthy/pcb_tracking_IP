@@ -441,6 +441,9 @@ if __name__ == "__main__":
     VID_FILE = ARGS.video_path
     
     # Create object and start main thread
-    pcb_det = pcb_region_detection()
-    pcb_det.display = DISPLAY_ALL
-    pcb_det.mainThread()
+    try:
+        pcb_det = pcb_region_detection()
+        pcb_det.display = DISPLAY_ALL
+        pcb_det.mainThread()
+    finally:
+        pcb_det.videoCapStop()
