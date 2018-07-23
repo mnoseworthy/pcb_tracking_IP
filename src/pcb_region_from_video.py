@@ -24,6 +24,10 @@ VID_FILE = 0
 STEP_THROUGH_FRAMES = False
 ONE_FRAME_ONLY = False
 DISPLAY_ALL = False
+#THRESH_LOW = np.array([45,70,70])
+#THRESH_HIGH = np.array([82, 255, 255])
+THRESH_LOW = np.array([45,70,70])
+THRESH_HIGH = np.array([82, 255, 255])
 
 class pcb_region_detection():
     def __init__(self, video_stream=None):
@@ -132,9 +136,8 @@ class pcb_region_detection():
         """
         #lower = np.array([45,25,0])
         #upper = np.array([82, 140,180])
-        lower = np.array([45,70,70])
-        upper = np.array([82, 255, 255])
-        
+        lower = THRESH_LOW
+        upper = THRESH_HIGH
         #lower = np.array([0,100,100])
         #upper = np.array([180, 180,180])
         green_mask = cv2.inRange(img, lower, upper)
