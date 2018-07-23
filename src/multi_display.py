@@ -89,7 +89,7 @@ def ShowManyImages(title, images):
 
     # Create canvas image
     dims = scaleMap[numImages]
-    canvas_image = np.zeros((dims['h']*dims['scale'] , dims['w']*dims['scale'], 3), np.uint8)
+    canvas_image = np.zeros((dims['h']*dims['scale'] +20*dims['h'], dims['w']*dims['scale']+20*dims['w'], 3), np.uint8)
 
     # Iterate over input images
     imgIndex = 0

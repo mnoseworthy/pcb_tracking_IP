@@ -18,7 +18,6 @@ from time import sleep
 from threading import Event
 from multi_display import ShowManyImages
 
-
 # Adjust default behavior
 FROM_CAM = False
 VID_FILE = 0

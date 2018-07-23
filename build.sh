@@ -1,15 +1,13 @@
 #!/bin/bash
-# Clean up previous build
-rm -r ./dist
+
 
 # Run the installer
-pyinstaller --onefile ./src/pcb_region_from_video.py \
+pyinstaller --onefile \
     --clean \
     --paths ./src \
+    --add-data assets/*:assets /
+    ./src/pcb_region_from_video.py
 
-# Copy assets to dist
-mkdir dist/assets
-cp ./assets/* ./
 
 # Create launcers
 echo "./pcb_region_from_video  assets/tracking1.MOV --step-through-frame --display-all" > ./dist/video_demo.sh
